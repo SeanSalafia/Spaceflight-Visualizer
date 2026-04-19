@@ -6,7 +6,7 @@ Visualize spaceflight data in Tableau Desktop to explore launch history, mission
 
 ## Data Overview
 
-`Spaceflight_Data.csv` contains comprehensive historical spaceflight mission records spanning from 1957 to present. The dataset includes 43 columns organized into the following categories:
+`Spaceflight_Data.csv` contains comprehensive historical spaceflight mission records spanning from 1957 to present. The dataset includes 41 columns organized into the following categories:
 
 ### Launch Information (9 columns)
 
@@ -85,15 +85,8 @@ Visualize spaceflight data in Tableau Desktop to explore launch history, mission
 | has_recovery_data | Boolean flag indicating recovery data availability |
 | data_complete | Boolean flag indicating record completeness |
 
-### Secondary/Legacy Fields (2 columns)
-
-| Field | Description |
-|-------|-------------|
-| ll2_pad | Alternative pad designation |
-| ll2_status | Alternative status field |
-
 ## Files
 
-- `Spaceflight_Data.csv` - Complete spaceflight dataset with 43 columns
+- `Spaceflight_Data.csv` - Complete spaceflight dataset with 41 columns
 - `build_data.py` - Data processing/preparation script
 - `README.md` - This file

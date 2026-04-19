@@ -471,6 +471,23 @@ print(f"  LL2 matched: {merged['ll2_name'].notna().sum()}/{len(merged)}")
 
 merged["orbit_class"] = merged["orbit_class"].combine_first(merged["ll2_orbit"])
 
+# Integrate legacy LL2 fields into primary fields
+merged["launch_pad"] = merged["launch_pad"].combine_first(merged["ll2_pad"])
+
+# For ll2_status, parse and fill missing launch_success values
+def parse_ll2_status(status):
+    if pd.isna(status):
+        return None
+    s = str(status).strip().lower()
+    if "success" in s or s in ("go", "on target"):
+        return True
+    if "failure" in s or "fail" in s or s == "tbd":
+        return False
+    return None
+
+missing_success = merged["launch_success"].isna()
+merged.loc[missing_success, "launch_success"] = merged.loc[missing_success, "ll2_status"].apply(parse_ll2_status)
+
 lox_pattern = r"(?i)^(liquid oxygen|lox)$"
 bad = merged["propellant_1"].str.match(lox_pattern, na=False)
 
@@ -501,13 +518,11 @@ FINAL_COLS = {
     "lv_state":             "lv_state",
     "launch_site":          "launch_site",
     "launch_pad":           "launch_pad",
-    "ll2_pad":              "ll2_pad",
     "ll2_location":         "ll2_location",
     "ll2_lat":              "launch_lat",
     "ll2_lon":              "launch_lon",
     "platform":             "platform",
     "launch_success":       "launch_success",
-    "ll2_status":           "ll2_status",
     "flight_id":            "flight_id",
     "mission_name":         "mission_name",
     "payload_name":         "payload_name",
