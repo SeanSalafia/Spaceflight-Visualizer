@@ -1,0 +1,14 @@
+{
+  "name": "spaceflight-visualizer",
+  "version": "1.0.0",
+  "description": "Spaceflight launch data collection for Tableau visualization",
+  "scripts": {
+    "collect": "bun run collect.ts",
+    "collect:full": "bun run collect.ts --max 1000",
+    "collect:recent": "bun run collect.ts --max 100"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^6.0.3"
+  }
+}
