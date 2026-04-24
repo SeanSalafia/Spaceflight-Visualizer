@@ -122,6 +122,7 @@ Type: Float (percentage)
 Formula:
   SUM([Success Flag]) / COUNT([ID])
 Notes: Format this field as Percentage with 1 decimal place.
+Will be used to find the sucess rate of crafts that have been used multiple times
        Right-click the field > Default Properties > Number Format > Percentage.
 ------------------------------------------------------------
 
