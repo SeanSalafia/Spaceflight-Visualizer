@@ -5,61 +5,32 @@
 
 ABOUT THIS GUIDE
 ----------------
-Tableau cannot be scripted to build sheets from the command line, so this guide
-walks you through each visualization step by step inside the app. Open
-Visualizing_Spaceflight.twbx in Tableau Desktop, connect to the embedded
-spaceflight_data.csv source, and follow the sections below.
+Tableau cannot be scripted from the command line, so this guide walks through
+each visualization inside the app. Open Visualizing_Spaceflight.twbx in
+Tableau Desktop, connect to spaceflight_data.csv, and follow the sections below.
 
-The eight visualizations are designed to be DISTINCT in chart type and in the
-story they tell. Each one stands alone but also fits into a coherent dashboard
-narrative: the transformation of spaceflight from a Cold War government
-monopoly into a commercially-dominated, rapidly-iterating industry.
+Two visualizations (Viz 5 and Viz 7) use Tableau Extensions. Download and
+install them from Tableau Exchange (Help > Extensions > Browse Extensions)
+before starting those sheets.
 
 ================================================================================
-  ANALYTICAL GOALS — WHAT QUESTIONS DO THESE VISUALIZATIONS ANSWER?
+  ANALYTICAL GOALS
 ================================================================================
-
-This workbook is organized around five high-level analytical questions. Each
-visualization below is tagged with the question(s) it primarily addresses.
 
 QUESTION A — How has the pace and ownership of spaceflight changed over time?
-  Addressed by: Viz 1 (Commercial Revolution), Viz 2 (Reliability Journey),
-                Viz 7 (Vehicle Family Lifespans)
-  Relevance: The single biggest industry narrative of the 2020s is the
-  commercial takeover of launch. Policy makers, investors, and space agencies
-  all need to understand when, how fast, and how completely this transition
-  has occurred.
+  Viz 1 (Commercial Revolution), Viz 2 (Reliability Journey), Viz 7 (Vehicle Comparison)
 
-QUESTION B — How has rocket reusability changed the economics of access to space?
-  Addressed by: Viz 3 (Booster Reuse), Viz 6 (Price War), Viz 8 (Propellant Shift)
-  Relevance: Reuse is the central economic lever of the new space industry.
-  Understanding flight cadence per booster, cost-per-kg trends, and next-gen
-  propellant choices answers whether the "cost to orbit" is actually falling
-  and what comes next (Methalox, full reusability, Starship).
+QUESTION B — How has reusability changed launch economics?
+  Viz 3 (Booster Reuse), Viz 6 (Price War), Viz 8 (Propellant Shift)
 
-QUESTION C — Where in the world is space power concentrated, and is it diversifying?
-  Addressed by: Viz 4 (Global Launch Sites)
-  Relevance: Geopolitical analysis of space requires knowing which nations
-  have independent orbital access. The map makes visible both the Cold War
-  bipolar monopoly and the emerging multi-polar landscape (India, New Zealand,
-  Japan, Israel, South Korea, Iran) that has geopolitical implications for
-  satellite internet access, reconnaissance, and GPS alternatives.
+QUESTION C — Where is orbital launch capability concentrated?
+  Viz 4 (Global Launch Sites)
 
-QUESTION D — What are rockets being used for, and how is that mission mix shifting?
-  Addressed by: Viz 5 (Orbit Mix), Viz 8 (Propellant Shift)
-  Relevance: The type of orbit chosen reveals intent — spy satellites go to
-  elliptical orbits, broadband constellations go to LEO, weather/earth
-  observation goes to SSO. The dramatic shift toward LEO since 2018 tells the
-  story of Starlink and commercial internet from orbit. Propellant choice tells
-  a parallel story about long-term vision (Methalox = reusability + Mars).
+QUESTION D — What are rockets being used for, and how is the mission mix shifting?
+  Viz 5 (Agency–Orbit Flow), Viz 8 (Propellant Shift)
 
 QUESTION E — How reliable is the launch industry, and which systems are most proven?
-  Addressed by: Viz 2 (Reliability Journey), Viz 7 (Vehicle Lifespans),
-                Viz 3 (Booster Reuse — recovery success rate)
-  Relevance: For satellite operators and insurers, reliability history is
-  critical for launch vehicle selection. The 60-year success-rate arc and the
-  vehicle-by-vehicle track records directly answer procurement and risk
-  assessment questions.
+  Viz 2 (Reliability Journey), Viz 7 (Vehicle Comparison), Viz 3 (Booster Reuse)
 
 SUMMARY TABLE:
   Visualization                  | Primary Goal | Chart Type
@@ -68,9 +39,9 @@ SUMMARY TABLE:
   02 - Reliability Journey       |    A, E      | Dual-Axis Bar + Line
   03 - Booster Reuse             |    B, E      | Scatter / Dot Plot
   04 - Global Launch Sites       |      C       | Geographic Symbol Map
-  05 - Orbit Mix                 |    D         | 100% Stacked Bar
+  05 - Agency–Orbit Flow         |      D       | Sankey Diagram (Extension)
   06 - Price War                 |      B       | Scatter Plot
-  07 - Vehicle Family Lifespans  |    A, E      | Gantt / Range Bar
+  07 - Vehicle Family Comparison |    A, E      | Radar Chart (Extension)
   08 - Propellant Shift          |    B, D      | 100% Stacked Area
   --------------------------------+--------------+---------------------------
 
@@ -105,7 +76,6 @@ FIELD: Year
 Type: Integer
 Formula:
   YEAR([Date Utc])
-Notes: Used as the primary time axis on many sheets.
 ------------------------------------------------------------
 
 ------------------------------------------------------------
@@ -113,7 +83,6 @@ FIELD: Success Flag
 Type: Integer (0/1)
 Formula:
   IF [Outcome] = "Success" THEN 1 ELSE 0 END
-Notes: Enables calculating success rate as a ratio.
 ------------------------------------------------------------
 
 ------------------------------------------------------------
@@ -121,8 +90,8 @@ FIELD: Success Rate
 Type: Float (percentage)
 Formula:
   SUM([Success Flag]) / COUNT([ID])
-Notes: Format this field as Percentage with 1 decimal place.
-       Right-click the field > Default Properties > Number Format > Percentage.
+Notes: Format as Percentage with 1 decimal place.
+       Right-click > Default Properties > Number Format > Percentage.
 ------------------------------------------------------------
 
 ------------------------------------------------------------
@@ -130,8 +99,7 @@ FIELD: Booster Flight # (Numeric)
 Type: Integer
 Formula:
   INT([Booster Flight Number])
-Notes: The raw column "Booster Flight Number" is a string; this casts it.
-       Rows where it is not a valid integer will return null — that is fine.
+Notes: Rows with non-integer values return null — expected behavior.
 ------------------------------------------------------------
 
 ------------------------------------------------------------
@@ -139,8 +107,7 @@ FIELD: Launch Cost (Millions USD)
 Type: Float
 Formula:
   FLOAT([Launch Cost Usd]) / 1000000
-Notes: Converts the raw string USD cost to a float in millions.
-       Null-safe: Tableau returns NULL when FLOAT() cannot parse the string.
+Notes: Returns NULL when the string cannot be parsed.
 ------------------------------------------------------------
 
 ------------------------------------------------------------
@@ -176,7 +143,6 @@ Formula:
   ELSEIF [Year] <= 2015 THEN "4. Commercial Dawn (2006-2015)"
   ELSE "5. Commercial Dominance (2016-present)"
   END
-Notes: Used as an annotation field or color dimension on scatter plots.
 ------------------------------------------------------------
 
 ------------------------------------------------------------
@@ -189,470 +155,508 @@ Formula:
       THEN "Attempted – Failed"
   ELSE "Not Attempted"
   END
-Notes: Three-way label for recovery status on any scatter or bar chart.
+------------------------------------------------------------
+
+-- Helper LOD field used by Viz 7 (Radar Chart) --
+
+------------------------------------------------------------
+FIELD: Family Total Launches
+Type: Integer (LOD)
+Formula:
+  { FIXED [Vehicle Family] : COUNT([ID]) }
+------------------------------------------------------------
+
+-- Normalized radar fields (0–100 scale for radar axes) --
+-- Divisors are the observed maximums across all families --
+
+------------------------------------------------------------
+FIELD: Radar: Launch Count (Norm)
+Type: Float
+Formula:
+  { FIXED [Vehicle Family] : COUNT([ID]) } / 1037.0 * 100
+Notes: 1037 = Soyuz total (max in dataset). Update divisor if data changes.
+------------------------------------------------------------
+
+------------------------------------------------------------
+FIELD: Radar: Success Rate (0-100)
+Type: Float
+Formula:
+  { FIXED [Vehicle Family] : AVG([Success Flag]) } * 100
+------------------------------------------------------------
+
+------------------------------------------------------------
+FIELD: Radar: LEO Capacity (Norm)
+Type: Float
+Formula:
+  { FIXED [Vehicle Family] : AVG([Leo Capacity Kg]) } / 95000.0 * 100
+Notes: 95,000 kg = SLS Block 1 (max in dataset).
+------------------------------------------------------------
+
+------------------------------------------------------------
+FIELD: Radar: Annual Cadence (Norm)
+Type: Float
+Formula:
+  (
+    { FIXED [Vehicle Family] : COUNT([ID]) } /
+    { FIXED [Vehicle Family] : (MAX(YEAR([Date Utc])) - MIN(YEAR([Date Utc])) + 1) }
+  ) / 37.0 * 100
+Notes: ~37 launches/year ≈ SpaceX peak. Uses YEAR([Date Utc]) directly —
+       do not substitute [Year] here or Tableau may reject the nested LOD.
+------------------------------------------------------------
+
+------------------------------------------------------------
+FIELD: Radar: Orbit Diversity (Norm)
+Type: Float
+Formula:
+  { FIXED [Vehicle Family] : COUNTD([Orbit Abbreviation]) } / 12.0 * 100
+Notes: Counts distinct orbit types served by each family (LEO, SSO, GTO,
+       MEO, Sub, etc.). 12 is the approximate observed maximum — verify
+       with COUNTD([Orbit Abbreviation]) per family before publishing.
+       Rewards versatility rather than age.
 ------------------------------------------------------------
 
 
 ================================================================================
-  VISUALIZATION 1 — "THE COMMERCIAL LAUNCH REVOLUTION"
+  VISUALIZATION 1 — "COMMERCIAL LAUNCH SHARE OVER TIME"
   Chart type: Stacked Area Chart
-  Key story:  Commercial launches surpassed government in 2020 and
-              now account for 3× more launches annually (2025: 245 vs 93).
+  Key numbers: Commercial overtook government in 2020; by 2025 the ratio is ~3:1.
 ================================================================================
 
 WHAT TO BUILD:
 A year-by-year stacked area chart showing total launches broken out by
-Agency Type. The shape tells the entire story: Cold War plateau, post-Soviet
-dip, then an explosive commercial ramp starting around 2018.
+Agency Type. The shape shows the Cold War plateau, post-Soviet decline, and
+the commercial ramp from 2018 onward.
 
-DATA POINTS TO HIGHLIGHT:
+KEY DATA POINTS:
   2020: first year commercial > government (70 vs 50)
-  2023: commercial hits 145, government at 82
-  2025: commercial 245, government 93 — nearly 3:1 ratio
+  2023: commercial 145, government 82
+  2025: commercial 245, government 93
 
 STEP-BY-STEP:
-1. Open a new worksheet. Name it "01 - Commercial Revolution".
-2. Drag [Date Utc] to the Columns shelf.
-   - Right-click it > select YEAR(Date Utc) (discrete blue pill).
-3. Drag [ID] (or any row-count measure) to the Rows shelf.
-   - Change aggregation to CNT (right-click > Measure > Count).
-4. Drag [Agency Type] to the Color card on the Marks panel.
-5. In the Marks dropdown (currently "Automatic"), switch to "Area".
-6. On the Columns shelf, right-click YEAR([Date Utc]) > Filter.
-   - Set range: 1957 to 2026.
-   (Optionally limit to 1980+ to focus on the modern story.)
-7. Right-click [Agency Type] on the Color card > Edit Colors.
-   - Suggest: Commercial = #E84855 (red/orange), Government = #1F5FA6 (blue),
-     Other = #A8A8A8 (gray), Private = #F4A261 (amber).
-8. Format the Y-axis label: "Launches per Year"
-9. Add a Reference Line at Year 2020:
-   - Analytics pane > drag "Reference Line" to the chart.
-   - Set it to Constant = 2020 (an X-axis line).
-   - Label: "Commercial Overtakes Government (2020)"
-10. Add a title: "The Commercial Launch Revolution (1957–2026)"
+1. New worksheet. Name it "01 - Commercial Revolution".
+2. Drag [Date Utc] to Columns > right-click > YEAR (discrete blue pill).
+3. Drag [ID] to Rows > change aggregation to CNT.
+4. Drag [Agency Type] to Color on the Marks panel.
+5. Marks dropdown: switch to "Area".
+6. Right-click YEAR([Date Utc]) on Columns > Filter > range 1957–2026.
+7. Right-click [Agency Type] on Color > Edit Colors:
+   Commercial = #E84855, Government = #1F5FA6, Other = #A8A8A8, Private = #F4A261.
+8. Label Y-axis: "Launches per Year".
+9. Analytics pane > drag "Reference Line" to chart > Constant = 2020 (X-axis).
+   Label: "Commercial Overtakes Government (2020)".
+10. Title: "Commercial Launch Share (1957–2026)"
 
-INSIGHT TEXT FOR DASHBOARD (caption):
-  "For 60 years spaceflight was a government monopoly.
-   Commercial providers overtook government agencies in 2020
-   and now account for more than 70% of all launches."
+DASHBOARD CAPTION:
+  "Commercial providers overtook government agencies in 2020 and now account
+   for over 70% of all launches."
+
 
 ================================================================================
-  VISUALIZATION 2 — "RELIABILITY THROUGH THE AGES"
+  VISUALIZATION 2 — "LAUNCH RELIABILITY BY YEAR"
   Chart type: Dual-Axis Combo (Bar + Line)
-  Key story:  Success rates climbed from 29% in 1958 to 97%+ today,
-              driven by iterative design and decades of engineering.
+  Key numbers: 29% success in 1958 → 97%+ today across record launch volumes.
 ================================================================================
 
 WHAT TO BUILD:
-A dual-axis chart: bars showing total launches per year (volume) and a line
-overlay showing the success rate percentage. The gap between the early tall
-failures and modern near-perfect reliability is visually striking.
+Bars for total launches per year, with a line overlay for success rate.
+Volume and reliability are on separate axes so both trends are legible.
 
-DATA POINTS TO HIGHLIGHT:
-  1958: 29% success rate (8/28 launches)
+KEY DATA POINTS:
+  1958: 29% success rate
   1986: 92.7% — year of the Challenger disaster
-  2024: 97.4% success rate across 272 launches
-  2025: 96.5% success rate across 341 launches (highest volume ever)
+  2024: 97.4% across 272 launches
+  2025: 96.5% across 341 launches
 
 STEP-BY-STEP:
 1. New worksheet, name it "02 - Reliability Journey".
-2. Drag [Date Utc] to Columns > set to YEAR (discrete).
-3. Drag COUNT([ID]) to Rows. Change Marks to "Bar". Label the axis "# Launches".
-4. Drag [Success Rate] (your calculated field) to Rows as a SECOND pill.
-   Now you have two measures on Rows — this creates a separate axis.
-5. Right-click the [Success Rate] axis on the right > "Dual Axis".
-6. Right-click the secondary axis (right side) > "Synchronize Axis" — uncheck
-   synchronize (you want the line to float 0–100%, bars use absolute counts).
-7. In the Marks panel, select the [Success Rate] card.
-   - Change its mark type to "Line".
-   - Set Color to orange (#F4A261) and increase line thickness to 2.
-8. Select the COUNT([ID]) Marks card:
-   - Color bars by [Agency Era] calculated field for extra context.
-9. Right-click the right Y-axis > Edit Axis > set range Fixed: 0 to 1.
-   - Format as percentage (right-click axis > Format > Pane > Numbers > Percentage).
-10. Add reference band for Cold War era (1957–1991):
-    - Analytics pane > Reference Band. Set from 1957 to 1991.
-    - Label: "Cold War Era". Use a light gray fill.
-11. Add annotation at 1986 to mark Challenger (right-click point > Annotate > Mark).
-12. Title: "Reliability Through the Ages: From 29% to 97%"
+2. Drag [Date Utc] to Columns > YEAR (discrete).
+3. Drag COUNT([ID]) to Rows. Set Marks to "Bar". Label axis "# Launches".
+4. Drag [Success Rate] to Rows as a second pill.
+5. Right-click the [Success Rate] axis > "Dual Axis".
+6. Right-click the secondary (right) axis > "Synchronize Axis" > uncheck.
+   (Line stays 0–100%; bars use absolute counts.)
+7. In Marks panel, select the [Success Rate] card:
+   - Change mark type to "Line". Color: #F4A261, thickness 2.
+8. Select COUNT([ID]) Marks card > color by [Agency Era].
+9. Right-click right Y-axis > Edit Axis > Fixed: 0 to 1.
+   Right-click > Format > Numbers > Percentage.
+10. Analytics pane > Reference Band: 1957 to 1991.
+    Label: "Cold War Era". Light gray fill.
+11. Right-click the 1986 data point > Annotate > Mark. Label: "Challenger (1986)".
+12. Title: "Launch Reliability by Year (1957–2026)"
 
-INSIGHT TEXT FOR DASHBOARD:
-  "Early rockets failed more than half the time. Today, after 7,000+ launches
-   and iterative engineering, the global launch success rate exceeds 97% —
-   even as annual launch volume has hit all-time highs."
+DASHBOARD CAPTION:
+  "Early rockets failed more than half the time. The global success rate
+   now exceeds 97%, even as annual launch volume is at an all-time high."
+
 
 ================================================================================
-  VISUALIZATION 3 — "THE BOOSTER REUSE REVOLUTION"
-  Chart type: Scatter / Dot Plot (time on X, flight number on Y)
-  Key story:  SpaceX proved reuse works, compressing turnaround from
-              193 days (2017 avg) to 5.2 days (2026 avg). B1067 flew 34 times.
+  VISUALIZATION 3 — "BOOSTER REUSE OVER TIME"
+  Chart type: Scatter / Dot Plot
+  Key numbers: First reuse 2017; B1067 at 34 flights by April 2026.
 ================================================================================
 
 WHAT TO BUILD:
-Each dot is one launch where booster reuse data is available. X = launch date,
-Y = how many times that specific booster had flown. The upward drift of dots
-over time—from 1 and 2 in 2017 to 30+ by 2025—makes the acceleration visceral.
+One dot per launch with booster reuse data. X = launch date, Y = booster
+flight number. Flight numbers climb from 1–2 in 2017 to 30+ by 2025.
 
-DATA POINTS TO HIGHLIGHT:
-  First reuse: SpaceX Falcon 9 SES-10, March 30, 2017 (booster B1021 flight 2)
-  B1067 on flight 34 (April 2026) — current record holder
-  Boosters B1067, B1071, B1063 all exceed 30 flights
-  SpaceX average pad turnaround 2017: 193 days → 2026: 5.2 days
+KEY DATA POINTS:
+  First reuse: Falcon 9 SES-10, March 30, 2017 (B1021, flight 2)
+  B1067 — 34 flights as of April 2026 (current record)
+  B1067, B1071, B1063 all exceed 30 flights
+  Average pad turnaround: 193 days (2017) → 5.2 days (2026)
 
 STEP-BY-STEP:
 1. New worksheet, name it "03 - Booster Reuse".
-2. Drag [Date Utc] to Columns > set to EXACT DATE (green continuous pill).
-   (Right-click pill > Exact Date, or keep as Month/Year for cleaner axis.)
-3. Drag [Booster Flight # (Numeric)] to Rows. Set aggregation to MAX or
-   use Dimension (right-click > Dimension) to show individual points.
-4. In the Marks dropdown select "Circle".
-5. Drag [Launch Provider] to Color. This immediately shows SpaceX dominance.
-6. Drag [Booster Serial] to the Detail card so each dot = one booster flight.
-7. Add a Filter on [Launch Provider]: include only providers with recovery data
-   (SpaceX, Blue Origin, ROSCOSMOS). Or filter [Recovery Attempted] = "true".
-8. Add a Filter on [Booster Flight # (Numeric)]: exclude NULLs.
-9. Drag [Recovery Outcome Label] to Shape card:
+2. Drag [Date Utc] to Columns > Exact Date (green continuous pill).
+3. Drag [Booster Flight # (Numeric)] to Rows > aggregation MAX, or
+   right-click > Dimension for individual points.
+4. Marks dropdown: "Circle".
+5. Drag [Launch Provider] to Color.
+6. Drag [Booster Serial] to Detail (each dot = one booster flight).
+7. Filter [Launch Provider]: SpaceX, Blue Origin, ROSCOSMOS
+   — or filter [Recovery Attempted] = "true".
+8. Filter [Booster Flight # (Numeric)]: exclude NULLs.
+9. Drag [Recovery Outcome Label] to Shape:
    "Recovered" = filled circle, "Attempted – Failed" = X mark.
-10. Size the dots by [Total Thrust Kn] (larger rockets = bigger dots), or leave
-    uniform for clarity.
-11. Add a Reference Line on Y at flight 10 (label: "10 Flights") and flight 20.
-12. Annotate the highest point (B1067, flight 34) using:
-    Right-click highest dot > Annotate > Mark.
+10. Reference Lines at Y = 10 and Y = 20.
+11. Annotate highest point: right-click > Annotate > Mark.
     Label: "B1067 — 34 Flights (Apr 2026)"
-13. Title: "The Booster Reuse Revolution: SpaceX's Iterative Machine"
+12. Title: "Booster Flight Numbers Over Time"
 
-INSIGHT TEXT FOR DASHBOARD:
-  "In 2017 SpaceX flew a used booster for the first time. Eight years later,
-   their most-flown booster (B1067) had completed 34 missions, and the average
-   pad sits idle for only five days between launches."
+DASHBOARD CAPTION:
+  "SpaceX flew a reused booster for the first time in 2017. By 2026 their
+   most-flown booster had 34 missions and average turnaround is five days."
+
 
 ================================================================================
-  VISUALIZATION 4 — "THE WORLD MAP OF SPACE ACCESS"
-  Chart type: Filled Map + Symbol Overlay
-  Key story:  In 1957 two sites could reach orbit. By 2026, seven nations
-              have independent orbital launch capability from dozens of pads.
+  VISUALIZATION 4 — "GLOBAL LAUNCH SITES"
+  Chart type: Geographic Symbol Map
+  Key numbers: From 2 orbital-capable sites in 1957 to dozens today.
 ================================================================================
 
 WHAT TO BUILD:
-A geographic map showing every launch site as a circle. Circle size = total
-launches from that pad. Color = country code or provider type. This instantly
-communicates Cold War bipolarity vs modern multi-polarity of space access.
+A symbol map with one circle per launch site. Size = launch count from
+that pad. Color = country. Shows the Cold War bipolarity of launch
+sites and the gradual spread to other countries and continents.
 
 TOP 5 PADS BY LAUNCH COUNT:
-  Plesetsk Cosmodrome, Russia:       1,684 launches
-  Baikonur, Kazakhstan:              1,561 launches
-  Cape Canaveral SFS, FL, USA:       1,103 launches
-  Vandenberg SFB, CA, USA:             877 launches
-  Guiana Space Centre, French Guiana:  331 launches
+  Plesetsk Cosmodrome, Russia:       1,684
+  Baikonur, Kazakhstan:              1,561
+  Cape Canaveral SFS, FL, USA:       1,103
+  Vandenberg SFB, CA, USA:             877
+  Guiana Space Centre, French Guiana:  331
 
 STEP-BY-STEP:
 1. New worksheet, name it "04 - Global Launch Sites".
 2. Drag [Longitude] to Columns and [Latitude] to Rows.
-   Tableau should auto-detect these as geographic roles.
-   If not: right-click each field > Geographic Role > Longitude / Latitude.
-3. In the Marks dropdown, change to "Circle" (NOT Map — keep it as a symbol map).
-4. Change the base map: Map menu > Map Layers > select "Light" or "Dark" style.
-   Dark background ("Tableau Dark") makes the launch site circles pop.
-5. Drag [Country Code] to Color.
-   - Assign: USA = #1F5FA6 (blue), RUS/KAZ = #E84855 (red), CHN = #F4A261,
-     GUF = #2ECC71 (green, for ESA/Arianespace), others = gray.
-6. Drag COUNT([ID]) to Size. Adjust the size slider to make large sites visible
-   without overlapping small ones too much.
-7. Drag [Location] to Label (or to Detail for tooltip). This names each site.
-8. Drag [Launch Provider] to the Tooltip card for rich hover info.
-9. Add a Filter on [Country Code] to exclude blank entries.
-10. Right-click the largest circles (Plesetsk, Baikonur, Cape Canaveral) and
-    add Annotations labeling their launch count.
-11. Add a Page control or filter by [Year] to show launch site activation
-    over time (animated map — optional but impressive).
-12. Title: "Global Launch Sites: From Two Nations to Many (1957–2026)"
+   If not auto-detected: right-click each > Geographic Role > Longitude / Latitude.
+3. Marks dropdown: "Circle".
+4. Map menu > Map Layers > "Dark" style (circles stand out better).
+5. Drag [Country Code] to Color:
+   USA = #1F5FA6, RUS/KAZ = #E84855, CHN = #F4A261, GUF = #2ECC71, others = gray.
+6. Drag COUNT([ID]) to Size. Adjust slider as needed.
+7. Drag [Location] to Label (or Detail for tooltip only).
+8. Drag [Launch Provider] to Tooltip.
+9. Filter [Country Code]: exclude blank entries.
+10. Annotate Plesetsk, Baikonur, and Cape Canaveral with launch counts.
+11. Optional: add a Page control on YEAR([Date Utc]) to animate site activation.
+12. Title: "Global Launch Sites (1957–2026)"
 
-INSIGHT TEXT FOR DASHBOARD:
-  "The first satellites could only be launched from two countries. Today,
-   active launch sites span five continents — from Mahia, New Zealand (Rocket Lab)
-   to Satish Dhawan, India (ISRO) — as commercial providers democratize access."
+DASHBOARD CAPTION:
+  "Active launch sites now span five continents, including commercial
+   sites in New Zealand (Rocket Lab) and India (ISRO)."
+
 
 ================================================================================
-  VISUALIZATION 5 — "ORBIT MIX: FROM SPIES TO CONSTELLATIONS"
-  Chart type: 100% Stacked Bar Chart (by year)
-  Key story:  The LEO share has surged since 2018 as Starlink (380 launches)
-              and other megaconstellations redefine what orbit means commercially.
+  VISUALIZATION 5 — "AGENCY–ORBIT FLOW"
+  Chart type: Sankey Diagram (Tableau Extension)
+  Answers: Which agency types launch to which orbits, and at what volume?
 ================================================================================
 
 WHAT TO BUILD:
-A 100% stacked bar chart (normalized to 100% per year) showing orbit type
-distribution over time. The dramatic expansion of LEO in the last 5 years —
-driven by Starlink and other broadband constellations — visually dominates
-the right side of the chart.
+A Sankey diagram flowing from [Agency Type] (left) to [Orbit Abbreviation]
+(right). Flow width = launch count. Shows that commercial launches
+concentrate heavily in LEO, while government and military missions spread
+across GTO, SSO, and elliptical orbits.
 
-ORBIT DISTRIBUTION (2015-2026):
-  LEO:           866 (45%)
-  SSO:           384 (20%)   [sun-synchronous — Earth observation]
-  GTO:           247 (13%)   [geostationary transfer — comms sats]
-  Sub-orbital:   117 (6%)
-  MEO:            67 (3%)    [medium Earth orbit — GPS/nav]
-  Other:         248 (13%)
+EXTENSION REQUIRED:
+  Install a Sankey Chart extension from Tableau Exchange:
+    Help menu > Extensions > Browse Extensions > search "Sankey"
+  Several community versions are available. The Flerlage Twins' Sankey
+  (published at public.tableau.com) is widely used and documented.
+  Alternatively, search "Sankey" in the Tableau Viz Extensions gallery
+  (available in Tableau 2023.3+).
+
+DATA STRUCTURE:
+  The extension reads from the current worksheet view. No CSV reshaping
+  is needed — configure the sheet as follows:
+    Source dimension:  [Agency Type]
+    Target dimension:  [Orbit Abbreviation]
+    Flow measure:      COUNT([ID])
 
 STEP-BY-STEP:
-1. New worksheet, name it "05 - Orbit Mix Over Time".
-2. Drag [Date Utc] to Columns > YEAR (discrete).
-3. Drag COUNT([ID]) to Rows.
-4. Drag [Orbit Abbreviation] to Color.
-5. In the Marks dropdown, confirm "Bar" is selected.
-6. Click the "Show Me" toolbar icon and select "100% stacked bar" — OR —
-   Right-click the Y-axis > "Add Table Calculation" >
-   Percentage of Total, computed along "Table (across)".
-   This normalizes each bar to 100%.
-7. Filter [Orbit Abbreviation] to keep the top 8 values and group all others
-   as "(Other)":
-   - Right-click [Orbit Abbreviation] > Group. Select small values (Sub,
-     Helio-N/A, GSO, LO, GSTO, etc.) and right-click > Group.
-   - Name the group "Other Orbits".
-8. Edit Colors:
-   - LEO = #2196F3 (blue), SSO = #4CAF50 (green), GTO = #FF9800 (orange),
-     Sub = #9C27B0 (purple), MEO = #F44336 (red), Other = #9E9E9E.
-9. Add a Reference Line at Year 2018 on the X-axis:
-   - Label: "Starlink Era Begins (2018)".
-10. Add annotation for the 2025 LEO bar:
-    "380 Starlink launches since 2018"
-11. Title: "What We're Launching and Where: Orbit Mix 1957–2026"
+1. New worksheet, name it "05 - Agency–Orbit Flow".
+2. Drag [Agency Type] to Rows.
+3. Drag [Orbit Abbreviation] to Rows (second pill, after Agency Type).
+4. Drag COUNT([ID]) to the Text mark or to Columns.
+5. Filter [Orbit Abbreviation]: keep LEO, SSO, GTO, MEO, Sub.
+   Group remaining values: right-click > Group, name it "Other Orbits".
+6. Filter [Agency Type]: keep Commercial, Government, Private, Military.
+   Remove null/blank values.
+7. Add the Sankey extension:
+   - In Tableau 2023.3+: Marks dropdown > Viz Extensions > select Sankey.
+   - Or: Dashboard > Extensions > select your installed Sankey extension.
+8. In the extension configuration:
+   - Source Field:  [Agency Type]
+   - Target Field:  [Orbit Abbreviation]
+   - Value Field:   COUNT([ID])
+   - Color by source (Agency Type) if available.
+9. Assign colors consistent with the rest of the workbook:
+   Commercial = #E84855, Government = #1F5FA6, Private = #F4A261, Military = #9C27B0.
+10. Tooltip: include COUNT([ID]) formatted as "N launches".
+11. Title: "Agency Type to Orbit: Launch Flow (All Years)"
 
-INSIGHT TEXT FOR DASHBOARD:
-  "Cold War launches targeted elliptical spy-satellite orbits and direct GEO
-   for communications. Today, LEO dominates — driven almost entirely by
-   Starlink and broadband megaconstellations that have fundamentally shifted
-   what 'going to space' means economically."
+NOTES:
+  - Field mapping UI varies by extension version; check the extension's
+    own documentation if field names differ.
+  - Fallback if Sankey unavailable: 100% Stacked Bar with [Agency Type]
+    on Columns and [Orbit Abbreviation] on Color.
+
+DASHBOARD CAPTION:
+  "Commercial launches target LEO almost exclusively — driven by Starlink
+   and other broadband constellations. Government and military missions
+   distribute more evenly across GTO, SSO, and elliptical orbits."
+
 
 ================================================================================
-  VISUALIZATION 6 — "THE ROCKET PRICE WAR"
-  Chart type: Scatter Plot (LEO capacity vs launch cost)
-  Key story:  SpaceX's Falcon 9 delivers 10× more payload than Atlas V at
-              roughly half the sticker price — and competitors are scrambling.
+  VISUALIZATION 6 — "LAUNCH COST VS. PAYLOAD CAPACITY"
+  Chart type: Scatter Plot
+  Key numbers: Falcon 9 at $52M/22,800 kg vs Atlas V at $160M/18,800 kg.
 ================================================================================
 
 WHAT TO BUILD:
-One dot per unique vehicle (de-duplicate by Vehicle Name). X = LEO payload
-capacity in kg, Y = launch cost in $M USD. Color = Provider Type. Size = total
-launches. The scatter reveals how SpaceX disrupted the pricing axis AND the
-capacity axis simultaneously, while legacy vehicles cluster in the high-cost,
-moderate-capacity zone.
+One dot per unique vehicle. X = LEO payload capacity (kg), Y = launch cost
+($M USD). Color = provider type. Size = total launches. Shows how SpaceX
+repositioned price and capacity relative to legacy vehicles.
 
-KEY DATA POINTS:
-  Space Shuttle:    27,500 kg LEO  |  $450M per flight
-  Atlas V:         ~18,800 kg LEO  |  ~$160M per flight
-  Falcon 9:        22,800 kg LEO  |   ~$52M per flight  (reusable)
-  Falcon Heavy:    63,800 kg LEO  |  ~$95M
-  Rocket Lab Electron: 300 kg LEO |   ~$6M (small sat market)
-  SLS:             95,000 kg LEO  |  $2,000M (NASA SLS)
+KEY REFERENCE POINTS:
+  Space Shuttle:         27,500 kg LEO  |  $450M
+  Atlas V:              ~18,800 kg LEO  |  ~$160M
+  Falcon 9:              22,800 kg LEO  |   ~$52M  (reusable)
+  Falcon Heavy:          63,800 kg LEO  |   ~$95M
+  Rocket Lab Electron:      300 kg LEO  |    ~$6M
+  SLS:                   95,000 kg LEO  |  $2,000M
 
 STEP-BY-STEP:
 1. New worksheet, name it "06 - Launch Cost vs Capacity".
 2. Drag [Leo Capacity Kg] to Columns.
 3. Drag [Launch Cost (Millions USD)] to Rows.
-4. In the Marks panel, select "Circle".
+4. Marks panel: "Circle".
 5. Drag [Vehicle Name] to Detail (each dot = one vehicle).
-6. Because the raw data has many rows per vehicle with identical cost/capacity,
-   you need to de-duplicate. Use a Level of Detail (LOD) expression or:
-   - Drag the view to use AVG([Leo Capacity Kg]) and AVG([Launch Cost...]).
-   - Right-click Y and X > Measure > Average.
-7. Drag [Provider Type] to Color.
-   - Commercial = #E84855, Government = #1F5FA6, Private = #F4A261.
-8. Drag COUNT([ID]) to Size — larger circles = more launches (log scale helps).
-9. Drag [Vehicle Name] to Label. Show labels only for notable vehicles:
-   Worksheet > Show Mark Labels, then right-click > Mark Label > Never show
-   for crowded small points. Manually annotate key vehicles:
-   - Falcon 9, Falcon Heavy, Atlas V, Space Shuttle, SLS, Electron.
-10. Filter out rows where [Launch Cost (Millions USD)] or [Leo Capacity Kg]
-    is null — right-click each pill > Filter > Exclude null values.
-11. Set X axis to Log scale (right-click axis > Edit Axis > Scale: Logarithmic)
-    if you have very small rockets (Electron: 300 kg) next to Saturn V (140,000 kg).
-12. Add a diagonal reference line representing "constant cost/kg" efficiency ratio
-    using Analytics pane > Trend Line.
-13. Title: "The Rocket Price War: Launch Cost vs. Payload Capacity"
+6. De-duplicate by vehicle: right-click X and Y axis pills > Measure > Average.
+7. Drag [Provider Type] to Color:
+   Commercial = #E84855, Government = #1F5FA6, Private = #F4A261.
+8. Drag COUNT([ID]) to Size.
+9. Drag [Vehicle Name] to Label. Show labels only for notable vehicles
+   (Falcon 9, Falcon Heavy, Atlas V, Shuttle, SLS, Electron).
+10. Filter nulls: right-click each axis pill > Filter > Exclude null values.
+11. Right-click X-axis > Edit Axis > Scale: Logarithmic
+    (useful when Electron at 300 kg sits beside Saturn V at 140,000 kg).
+12. Analytics pane > Trend Line for a rough cost/kg reference.
+13. Title: "Launch Cost vs. Payload Capacity by Vehicle"
 
-INSIGHT TEXT FOR DASHBOARD:
-  "For decades, increasing payload capacity meant paying more. Falcon 9 broke
-   that relationship — delivering more to LEO at a fraction of Atlas V's price.
-   Today the market has bifurcated: heavy-lift giants vs small-sat specialists."
+DASHBOARD CAPTION:
+  "Legacy vehicles clustered in the high-cost, moderate-capacity zone.
+   Falcon 9 broke that pattern. The market has since split between
+   heavy-lift vehicles and dedicated small-sat launchers."
+
 
 ================================================================================
-  VISUALIZATION 7 — "VEHICLE FAMILY LIFESPANS"
-  Chart type: Gantt / Range Bar Chart (horizontal)
-  Key story:  Soyuz has been flying for 61 years across 1,037 launches.
-              Falcon 9 is already the second most-launched vehicle in history
-              after just 18 years — and still accelerating.
+  VISUALIZATION 7 — "VEHICLE FAMILY COMPARISON"
+  Chart type: Radar Chart (Tableau Extension)
+  Answers: How do major rocket families compare across five performance axes?
 ================================================================================
 
 WHAT TO BUILD:
-A horizontal Gantt chart where each row is a vehicle family. The bar spans
-from maiden flight year to last recorded flight year. Color = success rate,
-size of bar = total launches. This is a rich "history at a glance" chart that
-shows longevity vs volume vs reliability across the entire space age.
+A radar (spider) chart comparing 8 vehicle families across five normalized
+axes (all scaled 0–100):
+  1. Total Launches    (max = Soyuz 1,037)
+  2. Success Rate      (% × 100)
+  3. LEO Capacity      (max = SLS 95,000 kg)
+  4. Annual Cadence    (launches/active year; max ≈ SpaceX peak)
+  5. Orbit Diversity   (distinct orbit types served; max ≈ 12)
 
-KEY FAMILIES:
-  Soyuz:          1965–2026  |  1,037 launches  |  97% success
-  Falcon:         2006–2026  |    646 launches  |  99% success  **
-  Long March:     1970–2026  |    638 launches  |  97% success
-  Kosmos:         1961–2010  |    621 launches  |  93% success
-  Atlas:          1958–2026  |    441 launches  |  92% success
-  Proton/UR-500:  1965–2026  |    430 launches  |  89% success
-  R-7:            1960–2010  |    632 launches  |  92% success
-  Ariane:         1979–2026  |    267 launches  |  96% success
-  Delta:          1972–2024  |    301 launches  |  96% success
+Each family appears as a filled polygon. Soyuz scores high on volume;
+Falcon 9 on cadence; SLS on capacity; Atlas and Ariane on success rate;
+long-service multi-role families (Soyuz, Long March) on orbit diversity.
 
-** Falcon success rate includes all variants. Falcon 9 Block 5 alone >99%.
+FAMILIES TO INCLUDE (filter to these 8):
+  Soyuz, Falcon, Long March, Atlas, Proton/UR-500, Ariane, Delta, R-7
+
+EXTENSION REQUIRED:
+  Install a Radar / Spider Chart extension from Tableau Exchange:
+    Help menu > Extensions > Browse Extensions > search "Radar" or "Spider"
+  In Tableau 2023.3+, a Radar Chart Viz Extension is available natively:
+    Marks dropdown > Viz Extensions > Radar Chart
+
+CALCULATED FIELDS REQUIRED:
+  All five fields are defined in Step 0 under "Normalized radar fields":
+    [Radar: Launch Count (Norm)]
+    [Radar: Success Rate (0-100)]
+    [Radar: LEO Capacity (Norm)]
+    [Radar: Annual Cadence (Norm)]
+    [Radar: Orbit Diversity (Norm)]
 
 STEP-BY-STEP:
-1. New worksheet, name it "07 - Vehicle Family Lifespans".
-2. You need min and max year per family. Use an LOD calculated field:
-   - MIN Year: { FIXED [Vehicle Family] : MIN([Year]) }
-   - MAX Year: { FIXED [Vehicle Family] : MAX([Year]) }
-   (Worksheet menu > Analysis > Create Calculated Field for each.)
-   Name them [Family First Year] and [Family Last Year].
-3. Drag [Vehicle Family] to Rows.
-4. Drag [Family First Year] to Columns.
-5. Change Marks to "Gantt Bar".
-6. For Gantt bar SIZE (which controls bar length in Tableau's Gantt):
-   - Create a calculated field: [Family Duration] = [Family Last Year] - [Family First Year]
-   - Drag [Family Duration] to the Size card on the Marks panel.
-7. Drag [Success Rate] to Color. Edit the color palette to a gradient:
-   low = red (#E84855), mid = yellow, high = green (#4CAF50).
-8. Drag COUNT([ID]) to Label or Tooltip to show total launches on hover.
-9. Sort the rows by [Family First Year] descending so oldest families are at top.
-10. Filter to include only families with > 50 total launches for clarity
-    (right-click [Vehicle Family] > Filter > condition: COUNT([ID]) > 50).
-11. Right-click Y-axis rows > Sort > By Field > MIN([Family First Year]).
-12. Add a reference line at Year 2006 with label "SpaceX First Flight".
-13. Add a reference line at Year 1991 with label "Soviet Union Dissolves".
-14. Title: "Rocket Dynasties: Vehicle Family Lifespans (1957–2026)"
+1. New worksheet, name it "07 - Vehicle Family Comparison".
+2. Drag [Vehicle Family] to the Color card and to Detail.
+3. Filter [Vehicle Family] to the 8 families listed above.
+   Right-click [Vehicle Family] > Filter > select the 8.
+4. Drag the five Radar calculated fields to the Rows shelf as separate pills:
+   [Radar: Launch Count (Norm)]
+   [Radar: Success Rate (0-100)]
+   [Radar: LEO Capacity (Norm)]
+   [Radar: Annual Cadence (Norm)]
+   [Radar: Orbit Diversity (Norm)]
+   (The view will show 5 separate bar charts — the extension converts this.)
+5. Add the Radar Chart extension:
+   - Tableau 2023.3+: Marks dropdown > Viz Extensions > Radar Chart.
+   - Or: Dashboard > Extensions > select your installed Radar extension.
+6. In the extension configuration:
+   - Axes: map the five Radar measures as polygon axes.
+   - Category: [Vehicle Family]
+   - Enable grid lines at 25, 50, 75, 100.
+   - Enable filled polygon with ~30% opacity.
+7. Edit Colors: one distinct color per family.
+   Use the Tableau 10 or Color Blind 10 palette for accessibility.
+8. Tooltip: show the raw value alongside the normalized score so the
+   scale is clear (e.g., "Launch Count: 666 (64/100)").
+9. Title: "Vehicle Family Radar: Five-Axis Comparison"
 
-INSIGHT TEXT FOR DASHBOARD:
-  "Soyuz has been launching continuously for 61 years — the longest-running
-   rocket in history. Yet Falcon 9, born in 2006, already has the second most
-   launches of any family ever, and is still in production with no retirement
-   date announced."
+ALTERNATIVE IF EXTENSION UNAVAILABLE:
+  Build a Side-by-Side Bar Chart:
+  - [Vehicle Family] on Rows, five Radar measures on Columns (separate pills).
+  - Each bar chart covers one metric; together they give the same comparison.
+
+DASHBOARD CAPTION:
+  "Soyuz leads on volume and orbit diversity. Falcon 9 leads on cadence.
+   SLS is an outlier on capacity. Most mature families score above 90
+   on the success axis."
+
 
 ================================================================================
-  VISUALIZATION 8 — "THE PROPELLANT SHIFT: ENTER THE METHALOX ERA"
+  VISUALIZATION 8 — "PROPELLANT SHARE BY YEAR"
   Chart type: 100% Stacked Area Chart (normalized by year)
-  Key story:  Space was built on kerosene and hypergolics. The Methalox (CH4/LOX)
-              era — SpaceX Starship, Blue Origin New Glenn — is just beginning.
+  Key numbers: Hypergolics decline after 1991; Methalox appears after 2019.
 ================================================================================
 
 WHAT TO BUILD:
-A 100% stacked area chart showing propellant category share by year from 1957
-to 2026. The massive hypergolic (N2O4/UDMH) band representing the Soviet
-programs fades as they retired; the kerosene (RP-1) band grows with SpaceX;
-and a thin but growing Methalox sliver appears at the right edge — the
-most significant propellant story of the 2020s.
+A 100% stacked area chart showing propellant category share by year from
+1957 to 2026. The large hypergolic band (Soviet programs) narrows after
+1991. Kerosene (RP-1) grows with SpaceX. A Methalox band appears from 2019.
 
 PROPELLANT DISTRIBUTION (all time):
-  RP-1/LOX (Kerosene):          3,488  (46.6%)
-  N2O4/UDMH (Hypergolic):       1,241  (16.6%)
-  Unknown:                      1,297  (17.3%)
-  LH2/LOX (Hydrolox):             269   (3.6%)
-  Solid:                          291   (3.9%)
-  CH4/LOX (Methalox):              31   (0.4%)  <- new frontier
+  RP-1/LOX (Kerosene):       3,488  (46.6%)
+  N2O4/UDMH (Hypergolic):    1,241  (16.6%)
+  Unknown:                   1,297  (17.3%)
+  LH2/LOX (Hydrolox):          269   (3.6%)
+  Solid:                        291   (3.9%)
+  CH4/LOX (Methalox):            31   (0.4%)
 
 STEP-BY-STEP:
 1. New worksheet, name it "08 - Propellant Shift".
 2. Drag [Date Utc] to Columns > YEAR (discrete).
 3. Drag COUNT([ID]) to Rows.
-4. Drag [Propellant Category] (your calculated field) to Color.
-5. In the Marks dropdown, select "Area".
-6. Apply a Quick Table Calculation:
-   Right-click the COUNT([ID]) pill on Rows > Quick Table Calculation >
-   Percent of Total. Set compute using "Table (across)".
-   This normalizes each year's stack to 100%.
-7. Edit Colors (important for readability):
-   - Kerosene (RP-1/LOX):      #1F5FA6   (blue)
-   - Hypergolic (N2O4/UDMH):   #E84855   (red)
-   - Hydrolox (LH2/LOX):       #4CAF50   (green)
-   - Solid:                    #FF9800   (orange)
-   - Methalox (CH4/LOX):       #9C27B0   (purple — make it pop)
-   - Unknown/Other:            #BDBDBD   (gray)
-8. Reorder legend colors so Methalox is at the top or clearly separated.
-9. Add a callout annotation at 2019 pointing to the tiny Methalox area:
-   "Starship/New Glenn era begins — 31 Methalox launches by 2026"
-10. Add Reference Line at 1991 (Soviet collapse — large hypergolic drop).
-11. Filter: right-click [Date Utc] > Filter > include range 1960 to 2026
-    (1957-1959 have very few launches and no propellant data).
-12. Title: "The Propellant Shift: Kerosene, Hypergolics, and the Methalox Era"
+4. Drag [Propellant Category] to Color.
+5. Marks dropdown: "Area".
+6. Right-click COUNT([ID]) on Rows > Quick Table Calculation >
+   Percent of Total > compute using "Table (across)".
+7. Edit Colors:
+   Kerosene (RP-1/LOX):      #1F5FA6  (blue)
+   Hypergolic (N2O4/UDMH):   #E84855  (red)
+   Hydrolox (LH2/LOX):       #4CAF50  (green)
+   Solid:                    #FF9800  (orange)
+   Methalox (CH4/LOX):       #9C27B0  (purple — make it stand out)
+   Unknown/Other:             #BDBDBD  (gray)
+8. Reorder the legend so Methalox is visually separated and easy to find.
+9. Annotate at 2019: "Starship / New Glenn Methalox launches begin".
+10. Reference Line at 1991: "Soviet Union dissolves".
+11. Filter [Date Utc]: 1960–2026 (1957–1959 have sparse propellant records).
+12. Title: "Propellant Share by Year (1957–2026)"
 
-INSIGHT TEXT FOR DASHBOARD:
-  "The Soviet Union burned hypergolic fuels that are toxic and difficult
-   to handle — their decline after 1991 is visible as a receding red band.
-   Today's most-watched propellant is methane (CH4/LOX): cleaner, cheaper,
-   and theoretically manufacturable on Mars. Starship and New Glenn have
-   made 31 Methalox launches — the number will grow rapidly."
+DASHBOARD CAPTION:
+  "Hypergolic fuels (toxic, difficult to store) decline visibly after the
+   Soviet collapse in 1991. Methane (CH4/LOX) is a small share today but
+   Starship and New Glenn are growing it quickly."
+
 
 ================================================================================
   BUILDING THE DASHBOARD
 ================================================================================
 
-Once all 8 sheets are complete, create a master dashboard:
-
 1. New Dashboard. Name it "Spaceflight Era Dashboard".
-2. Set size to "Fixed Size > 1920 x 1080" for presentation quality.
-3. Suggested layout (2x4 grid):
+2. Set size: Fixed > 1920 × 1080.
+3. Suggested layout (2×4 grid):
 
    [01 Commercial Revolution]  |  [04 Global Launch Sites]
-   [02 Reliability Journey]    |  [05 Orbit Mix]
+   [02 Reliability Journey]    |  [05 Agency–Orbit Flow]
    [03 Booster Reuse]          |  [06 Price War]
-   [07 Vehicle Lifespans]      |  [08 Propellant Shift]
+   [07 Vehicle Comparison]     |  [08 Propellant Shift]
 
-4. Add a global Year Range filter:
-   - Drag YEAR([Date Utc]) onto the dashboard as a filter.
-   - Edit the filter control > Apply to Worksheets > All Using This Data Source.
-   - This makes the entire dashboard interactive by time period.
+4. Global Year Range filter:
+   - Drag YEAR([Date Utc]) onto the dashboard.
+   - Edit filter > Apply to Worksheets > All Using This Data Source.
 
-5. Add a global Agency Type filter (same method) — lets viewers toggle
-   between Government and Commercial only.
+5. Global Agency Type filter (same method).
 
-6. Title the dashboard: "The Space Age in Data: 7,484 Launches, 1957–2026"
+6. Dashboard title: "The Space Age in Data: 7,484 Launches, 1957–2026"
 
-7. Color palette consistency:
-   Use the same color assignments across sheets wherever possible:
-     SpaceX / Commercial = #E84855 (red-orange)
-     Government / Soviet  = #1F5FA6 (blue)
-     China                = #F4A261 (amber)
-     ESA / Europe         = #4CAF50 (green)
-     Recovery / Success   = #2ECC71 (bright green)
-     Failure              = #E74C3C (bright red)
+7. Color consistency across sheets:
+   SpaceX / Commercial  =  #E84855
+   Government / Soviet  =  #1F5FA6
+   China                =  #F4A261
+   ESA / Europe         =  #4CAF50
+   Recovery / Success   =  #2ECC71
+   Failure              =  #E74C3C
+
+NOTE ON EXTENSIONS IN DASHBOARDS:
+  Extension sheets (Viz 5 Sankey, Viz 7 Radar) may require re-authorization
+  when added to a dashboard. If a sheet shows blank or "extension not loaded",
+  click the sheet on the dashboard > Edit > accept the permissions prompt again.
+
 
 ================================================================================
   PUBLISHING & NEXT STEPS
 ================================================================================
 
 SAVE THE WORKBOOK:
-  File > Save As > save as .twbx (packaged workbook) so the CSV is embedded.
-  This makes the file portable without needing the raw CSV alongside.
+  File > Save As > .twbx (packaged workbook) — embeds the CSV so the file
+  is portable without the raw CSV alongside.
 
 TABLEAU PUBLIC:
-  If publishing to Tableau Public, use: Server > Tableau Public > Save to
-  Tableau Public. The interactive workbook can then be embedded in websites
-  or shared via URL.
+  Server > Tableau Public > Save to Tableau Public.
+  Note: Extensions on Tableau Public require the extension to be on
+  Tableau's approved list. Verify compatibility before publishing, as
+  the Sankey and Radar extensions may not be available there.
 
 RECOMMENDED ENHANCEMENTS:
-  - Add tooltips with mission descriptions (drag [Mission Description] to Tooltip
-    on the relevant marks card — great for the scatter plots).
-  - On the Global Map (Viz 4), add a Page control on YEAR([Date Utc]) to
-    animate site activation over time.
-  - On Viz 3 (Booster Reuse), add [Days Since Last Flight] to tooltip so
-    viewers can see the decreasing turnaround per dot on hover.
-  - Add a KPI summary bar at the top of the dashboard with big-number text
-    tiles: "7,484 Total Launches" / "97% Success Rate (2024)" /
-    "34 Flights — Single Booster Record" / "380 Starlink Launches".
+  - Add [Mission Description] to Tooltip on the scatter plots.
+  - On Viz 4, add a Page control on YEAR([Date Utc]) to animate site activation.
+  - On Viz 3, add [Days Since Last Flight] to Tooltip to show turnaround per dot.
+  - Add a KPI summary bar at the top of the dashboard with text tiles:
+    "7,484 Total Launches" | "97% Success Rate (2024)" |
+    "34 Flights — Single Booster Record" | "380 Starlink Launches"
 
 DATA SOURCE NOTES:
-  - Data comes from The Space Devs' Launch Library 2 API (ll.thespacedevs.com).
-  - Only terminal-status launches are included (Success, Failure, Partial Failure).
-  - "Unknown" propellant entries are genuine data gaps in the LL2 API,
-    predominantly affecting older Soviet launches where records are incomplete.
-  - Launch Cost USD is a string field in the API and may be inconsistent across
-    providers and eras; treat cost comparisons as directional, not precise.
-  - Apogee Km is a vehicle-class reference altitude for most entries, not a
-    measured osculating element for the specific mission.
+  - Source: The Space Devs' Launch Library 2 API (ll.thespacedevs.com).
+  - Only terminal-status launches included (Success, Failure, Partial Failure).
+  - "Unknown" propellant entries reflect data gaps in LL2, mainly older
+    Soviet launches.
+  - Launch Cost USD is a string field in the API and is inconsistent across
+    providers and eras — treat cost comparisons as directional, not precise.
+  - Apogee Km is a vehicle-class reference altitude, not a mission-specific
+    osculating element.
 
 ================================================================================
   END OF GUIDE
