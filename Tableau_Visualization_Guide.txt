@@ -36,11 +36,11 @@ SUMMARY TABLE:
   Visualization                  | Primary Goal | Chart Type
   -------------------------------+--------------+---------------------------
   01 - Commercial Revolution     |      A       | Stacked Area
-  02 - Reliability Journey       |    A, E      | Dual-Axis Bar + Line
-  03 - Booster Reuse             |    B, E      | Scatter / Dot Plot
+  02 - Reliability Journey       |    A, E      | Area Line Chart
+  03 - Booster Reuse             |    B, E      | Multi-Line Career Chart
   04 - Global Launch Sites       |      C       | Geographic Symbol Map
   05 - Agency–Orbit Flow         |      D       | Sankey Diagram (Extension)
-  06 - Price War                 |      B       | Scatter Plot
+  06 - Price War                 |      B       | Horizontal Dot Plot
   07 - Vehicle Family Comparison |    A, E      | Radar Chart (Extension)
   08 - Propellant Shift          |    B, D      | 100% Stacked Area
   -------------------------------+--------------+---------------------------
@@ -143,6 +143,15 @@ Formula:
   ELSEIF [Year] <= 2015 THEN "4. Commercial Dawn (2006-2015)"
   ELSE "5. Commercial Dominance (2016-present)"
   END
+------------------------------------------------------------
+
+------------------------------------------------------------
+FIELD: Cost Per Kg (USD)
+Type: Float
+Formula:
+  [Launch Cost (Millions USD)] * 1000000 / [Leo Capacity Kg]
+Notes: Returns NULL when either source field is null. Lower value = more
+       efficient. Use Average aggregation per vehicle. Used by Viz 6.
 ------------------------------------------------------------
 
 ------------------------------------------------------------
@@ -253,13 +262,14 @@ DASHBOARD CAPTION:
 
 ================================================================================
   VISUALIZATION 2 — "LAUNCH RELIABILITY BY YEAR"
-  Chart type: Dual-Axis Combo (Bar + Line)
+  Chart type: Area Line Chart
   Key numbers: 29% success in 1958 → 97%+ today across record launch volumes.
 ================================================================================
 
 WHAT TO BUILD:
-Bars for total launches per year, with a line overlay for success rate.
-Volume and reliability are on separate axes so both trends are legible.
+A single-axis area chart of success rate by year. The shape tells the whole
+story: a volatile early period, gradual improvement through the Cold War, and
+a smooth plateau above 95% since the 2000s.
 
 KEY DATA POINTS:
   1958: 29% success rate
@@ -269,36 +279,38 @@ KEY DATA POINTS:
 
 STEP-BY-STEP:
 1. New worksheet, name it "02 - Reliability Journey".
-2. Drag [Date Utc] to Columns > YEAR (discrete).
-3. Drag COUNT([ID]) to Rows. Set Marks to "Bar". Label axis "# Launches".
-4. Drag [Success Rate] to Rows as a second pill.
-5. Right-click the [Success Rate] axis > "Dual Axis".
-6. Right-click the secondary (right) axis > "Synchronize Axis" > uncheck.
-   (Line stays 0–100%; bars use absolute counts.)
-7. In Marks panel, select the [Success Rate] card:
-   - Change mark type to "Line". Color: #F4A261, thickness 2.
-8. Select COUNT([ID]) Marks card > color by [Agency Era].
-9. Right-click right Y-axis > Edit Axis > Fixed: 0 to 1.
+2. Drag [Date Utc] to Columns > YEAR (discrete blue pill).
+3. Drag [Success Rate] to Rows.
+4. Marks dropdown: "Area".
+5. Set area color: #2ECC71 at 60% opacity (solid fill shows the reliability
+   plateau clearly against a white or light background).
+6. Right-click Y-axis > Edit Axis > Fixed: 0 to 1.
    Right-click > Format > Numbers > Percentage.
-10. Analytics pane > Reference Band: 1957 to 1991.
-    Label: "Cold War Era". Light gray fill.
-11. Right-click the 1986 data point > Annotate > Mark. Label: "Challenger (1986)".
+7. Drag COUNT([ID]) to Tooltip so hover shows launch volume in context.
+8. Analytics pane > Reference Band: 1957 to 1991.
+   Label: "Cold War Era". Light gray fill, gray border.
+9. Right-click the 1986 data point > Annotate > Mark.
+   Label: "Challenger (1986) — 92.7%".
+10. Add a point annotation at 1958: "1958: 29%".
+11. Add a point annotation at 2024: "2024: 97.4%".
 12. Title: "Launch Reliability by Year (1957–2026)"
 
 DASHBOARD CAPTION:
-  "Early rockets failed more than half the time. The global success rate
-   now exceeds 97%, even as annual launch volume is at an all-time high."
+  "From barely one-in-three successes in 1958, the global launch success rate
+   now consistently exceeds 97% — even at all-time-high annual launch volumes."
 
 
 ================================================================================
   VISUALIZATION 3 — "BOOSTER REUSE OVER TIME"
-  Chart type: Scatter / Dot Plot
+  Chart type: Multi-Line Career Chart
   Key numbers: First reuse 2017; B1067 at 34 flights by April 2026.
 ================================================================================
 
 WHAT TO BUILD:
-One dot per launch with booster reuse data. X = launch date, Y = booster
-flight number. Flight numbers climb from 1–2 in 2017 to 30+ by 2025.
+One line per top booster, showing its cumulative flight number over time.
+Each booster's "career" appears as a rising line from its first flight to its
+most recent. Filtering to the top 8 boosters keeps the view legible while
+showing both early pioneers (B1021) and current record-holders (B1067).
 
 KEY DATA POINTS:
   First reuse: Falcon 9 SES-10, March 30, 2017 (B1021, flight 2)
@@ -309,20 +321,21 @@ KEY DATA POINTS:
 STEP-BY-STEP:
 1. New worksheet, name it "03 - Booster Reuse".
 2. Drag [Date Utc] to Columns > Exact Date (green continuous pill).
-3. Drag [Booster Flight # (Numeric)] to Rows > aggregation MAX, or
-   right-click > Dimension for individual points.
-4. Marks dropdown: "Circle".
-5. Drag [Launch Provider] to Color.
-6. Drag [Booster Serial] to Detail (each dot = one booster flight).
-7. Filter [Launch Provider]: SpaceX, Blue Origin, ROSCOSMOS
-   — or filter [Recovery Attempted] = "true".
-8. Filter [Booster Flight # (Numeric)]: exclude NULLs.
-9. Drag [Recovery Outcome Label] to Shape:
-   "Recovered" = filled circle, "Attempted – Failed" = X mark.
-10. Reference Lines at Y = 10 and Y = 20.
-11. Annotate highest point: right-click > Annotate > Mark.
-    Label: "B1067 — 34 Flights (Apr 2026)"
-12. Title: "Booster Flight Numbers Over Time"
+3. Drag [Booster Flight # (Numeric)] to Rows > set aggregation to MAX.
+4. Drag [Booster Serial] to Color and to Detail.
+5. Marks dropdown: "Line". Set line thickness to 2px.
+6. Filter [Booster Flight # (Numeric)]: exclude NULLs.
+7. Filter [Booster Serial] to the 8 most-flown boosters. To find them:
+   - Create a quick view: [Booster Serial] on Rows, MAX([Booster Flight #
+     (Numeric)]) on Columns, sort descending, note the top 8 serials.
+   - Return here and apply that list as a manual filter.
+8. Assign each booster a distinct color from the Color Blind 10 palette.
+9. Reference Line at Y = 20: "20 Flights".
+10. Annotate the B1067 line endpoint: right-click > Annotate > Mark.
+    Label: "B1067 — 34 Flights (Apr 2026)".
+11. Add tooltip fields: [Recovery Outcome Label], [Launch Provider],
+    [Mission Name] for full context on hover.
+12. Title: "Top Booster Career Trajectories (2017–2026)"
 
 DASHBOARD CAPTION:
   "SpaceX flew a reused booster for the first time in 2017. By 2026 their
@@ -430,46 +443,55 @@ DASHBOARD CAPTION:
 
 
 ================================================================================
-  VISUALIZATION 6 — "LAUNCH COST VS. PAYLOAD CAPACITY"
-  Chart type: Scatter Plot
-  Key numbers: Falcon 9 at $52M/22,800 kg vs Atlas V at $160M/18,800 kg.
+  VISUALIZATION 6 — "LAUNCH COST EFFICIENCY BY VEHICLE"
+  Chart type: Horizontal Dot Plot (sorted by cost-per-kg)
+  Key numbers: Falcon 9 ~$2,300/kg vs Atlas V ~$8,500/kg vs SLS ~$21,000/kg.
 ================================================================================
 
 WHAT TO BUILD:
-One dot per unique vehicle. X = LEO payload capacity (kg), Y = launch cost
-($M USD). Color = provider type. Size = total launches. Shows how SpaceX
-repositioned price and capacity relative to legacy vehicles.
+One dot per vehicle on a single horizontal axis showing cost-per-kg to LEO.
+Sorting ascending reveals the efficiency frontier at a glance — SpaceX
+vehicles cluster at the left while legacy and government vehicles sit to the
+right. Size encodes total launches; color encodes provider type.
+
+CALCULATED FIELD REQUIRED:
+  [Cost Per Kg (USD)] — defined in Step 0.
 
 KEY REFERENCE POINTS:
-  Space Shuttle:         27,500 kg LEO  |  $450M
-  Atlas V:              ~18,800 kg LEO  |  ~$160M
-  Falcon 9:              22,800 kg LEO  |   ~$52M  (reusable)
-  Falcon Heavy:          63,800 kg LEO  |   ~$95M
-  Rocket Lab Electron:      300 kg LEO  |    ~$6M
-  SLS:                   95,000 kg LEO  |  $2,000M
+  Rocket Lab Electron:      ~$20,000/kg  (small dedicated launcher)
+  SLS Block 1:              ~$21,000/kg  (government super-heavy)
+  Atlas V:                   ~$8,500/kg
+  Space Shuttle:             ~$16,400/kg (historical)
+  Falcon Heavy:              ~$1,500/kg  (reusable)
+  Falcon 9:                  ~$2,300/kg  (reusable)
 
 STEP-BY-STEP:
 1. New worksheet, name it "06 - Launch Cost vs Capacity".
-2. Drag [Leo Capacity Kg] to Columns.
-3. Drag [Launch Cost (Millions USD)] to Rows.
+2. Drag [Vehicle Name] to Rows.
+3. Drag [Cost Per Kg (USD)] to Columns. Set aggregation: Average.
 4. Marks panel: "Circle".
-5. Drag [Vehicle Name] to Detail (each dot = one vehicle).
-6. De-duplicate by vehicle: right-click X and Y axis pills > Measure > Average.
-7. Drag [Provider Type] to Color:
+5. Right-click [Vehicle Name] pill on Rows > Sort > Field > Average of
+   [Cost Per Kg (USD)], Ascending. Most-efficient vehicles rise to the top.
+6. Drag [Provider Type] to Color:
    Commercial = #E84855, Government = #1F5FA6, Private = #F4A261.
-8. Drag COUNT([ID]) to Size.
-9. Drag [Vehicle Name] to Label. Show labels only for notable vehicles
-   (Falcon 9, Falcon Heavy, Atlas V, Shuttle, SLS, Electron).
-10. Filter nulls: right-click each axis pill > Filter > Exclude null values.
-11. Right-click X-axis > Edit Axis > Scale: Logarithmic
-    (useful when Electron at 300 kg sits beside Saturn V at 140,000 kg).
-12. Analytics pane > Trend Line for a rough cost/kg reference.
-13. Title: "Launch Cost vs. Payload Capacity by Vehicle"
+7. Drag COUNT([ID]) to Size.
+8. Filter [Cost Per Kg (USD)]: right-click axis > Filter > Exclude null values.
+   (This automatically hides vehicles missing cost or capacity data.)
+9. Drag [Launch Cost (Millions USD)] and [Leo Capacity Kg] to Tooltip for
+   context on hover.
+10. Right-click X-axis > Edit Axis > Scale: Logarithmic
+    (spans Falcon Heavy at ~$1,500/kg to SLS at ~$21,000/kg).
+11. Add a Reference Line at the Falcon 9 average value.
+    Label: "Falcon 9 benchmark".
+12. Drag [Vehicle Name] to Label; set label to show only for notable vehicles
+    (Falcon 9, Falcon Heavy, Atlas V, SLS, Electron, Shuttle).
+13. Title: "Launch Cost Efficiency by Vehicle ($/kg to LEO)"
 
 DASHBOARD CAPTION:
-  "Legacy vehicles clustered in the high-cost, moderate-capacity zone.
-   Falcon 9 broke that pattern. The market has since split between
-   heavy-lift vehicles and dedicated small-sat launchers."
+  "Falcon 9's reusability puts it among the most cost-efficient heavy launchers
+   ever built. Legacy vehicles cluster above $5,000/kg; SpaceX broke that
+   ceiling. The market has since split between heavy-lift vehicles and
+   dedicated small-sat launchers."
 
 
 ================================================================================
